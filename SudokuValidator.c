@@ -161,21 +161,22 @@ int main(int argc, char *argv[]) {
     else
         printf("El Sudoku NO es correcto.\n");
 
-    return 0;
-
+    
     pid_t child2 = fork();
-
+    
     if (child2 == 0) {
-
+        
         char pid_str[20];
         sprintf(pid_str, "%d", pid);
-
+        
         execlp("ps", "ps", "-p", pid_str, "-lLf", NULL);
-
+        
         perror("Error en execlp");
         exit(1);
     }
     else {
         wait(NULL);
     }
+    
+    return 0;
 }
