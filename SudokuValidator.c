@@ -4,6 +4,9 @@
 #include <sys/mman.h>
 #include <unistd.h>
 
+#include <sys/types.h>
+#include <sys/wait.h>
+
 int sudoku[9][9];   // matriz global
 
 int validar_fila(int fila) {
@@ -106,6 +109,27 @@ int main(int argc, char *argv[]) {
 
     munmap(map, 81);
     close(fd);
+
+    // PID del proceso padre
+    pid_t pid = getpid();
+    printf("PID del proceso padre: %d\n", pid);
+
+    pid_t child = fork();
+
+    if (child == 0) {
+        // Proceso hijo
+
+        char pid_str[20];
+        sprintf(pid_str, "%d", pid);
+
+        execlp("ps", "ps", "-p", pid_str, "-lLf", NULL);
+
+        perror("Error en execlp");
+        exit(1);
+    }
+    else {
+        wait(NULL);  // Esperar al hijo
+    }    
 
     int valido = 1;
 
