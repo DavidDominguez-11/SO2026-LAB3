@@ -6,6 +6,66 @@
 
 int sudoku[9][9];   // matriz global
 
+int validar_fila(int fila) {
+
+    int check[10] = {0};
+
+    for (int j = 0; j < 9; j++) {
+        int num = sudoku[fila][j];
+
+        if (num < 1 || num > 9)
+            return 0;
+
+        if (check[num] == 1)
+            return 0;
+
+        check[num] = 1;
+    }
+
+    return 1;
+}
+
+int validar_columna(int col) {
+
+    int check[10] = {0};
+
+    for (int i = 0; i < 9; i++) {
+        int num = sudoku[i][col];
+
+        if (num < 1 || num > 9)
+            return 0;
+
+        if (check[num] == 1)
+            return 0;
+
+        check[num] = 1;
+    }
+
+    return 1;
+}
+
+int validar_subcuadro(int fila_inicio, int col_inicio) {
+
+    int check[10] = {0};
+
+    for (int i = fila_inicio; i < fila_inicio + 3; i++) {
+        for (int j = col_inicio; j < col_inicio + 3; j++) {
+
+            int num = sudoku[i][j];
+
+            if (num < 1 || num > 9)
+                return 0;
+
+            if (check[num] == 1)
+                return 0;
+
+            check[num] = 1;
+        }
+    }
+
+    return 1;
+}
+
 int main(int argc, char *argv[]) {
 
     if (argc != 2) {
@@ -46,6 +106,36 @@ int main(int argc, char *argv[]) {
 
     munmap(map, 81);
     close(fd);
+
+    int valido = 1;
+
+    // Validar filas
+    for (int i = 0; i < 9; i++) {
+        if (!validar_fila(i)) {
+            valido = 0;
+        }
+    }
+
+    // Validar columnas
+    for (int i = 0; i < 9; i++) {
+        if (!validar_columna(i)) {
+            valido = 0;
+        }
+    }
+
+    // Validar subcuadros 3x3
+    for (int i = 0; i < 9; i += 3) {
+        for (int j = 0; j < 9; j += 3) {
+            if (!validar_subcuadro(i, j)) {
+                valido = 0;
+            }
+        }
+    }
+
+    if (valido)
+        printf("El Sudoku es correcto.\n");
+    else
+        printf("El Sudoku NO es correcto.\n");
 
     return 0;
 }
