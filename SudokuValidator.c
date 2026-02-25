@@ -7,6 +7,9 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
+#include <pthread.h>
+#include <sys/syscall.h>
+
 int sudoku[9][9];   // matriz global
 
 int validar_fila(int fila) {
@@ -69,6 +72,29 @@ int validar_subcuadro(int fila_inicio, int col_inicio) {
     return 1;
 }
 
+void* revisar_columnas_thread(void* arg) {
+
+    printf("Thread ejecutando revisión de columnas. TID: %ld\n",
+           syscall(SYS_gettid));
+
+    sleep(5);  // Para que ps alcance a ver el LWP (puedes quitarlo luego)
+
+    int valido = 1;
+
+    for (int i = 0; i < 9; i++) {
+        if (!validar_columna(i)) {
+            valido = 0;
+        }
+    }
+
+    if (valido)
+        printf("Columnas válidas.\n");
+    else
+        printf("Columnas NO válidas.\n");
+
+    pthread_exit(0);
+}
+
 int main(int argc, char *argv[]) {
 
     if (argc != 2) {
@@ -76,21 +102,18 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    // Abrir archivo
     int fd = open(argv[1], O_RDONLY);
     if (fd < 0) {
         perror("Error al abrir archivo");
         return 1;
     }
 
-    // Mapear archivo en memoria
     char *map = mmap(NULL, 81, PROT_READ, MAP_PRIVATE, fd, 0);
     if (map == MAP_FAILED) {
         perror("Error en mmap");
         return 1;
     }
 
-    // Copiar datos a matriz
     int index = 0;
     for (int i = 0; i < 9; i++) {
         for (int j = 0; j < 9; j++) {
@@ -98,7 +121,6 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    // Mostrar matriz para verificar
     printf("Sudoku cargado:\n");
     for (int i = 0; i < 9; i++) {
         for (int j = 0; j < 9; j++) {
@@ -110,14 +132,24 @@ int main(int argc, char *argv[]) {
     munmap(map, 81);
     close(fd);
 
-    // PID del proceso padre
     pid_t pid = getpid();
     printf("PID del proceso padre: %d\n", pid);
 
-    pid_t child = fork();
+    /* ----------- CREAR PTHREAD PRIMERO ----------- */
 
-    if (child == 0) {
-        // Proceso hijo
+    pthread_t thread_col;
+
+    if (pthread_create(&thread_col, NULL,
+                       revisar_columnas_thread, NULL) != 0) {
+        perror("Error creando pthread");
+        return 1;
+    }
+
+    /* ----------- PS MIENTRAS EL THREAD EXISTE ----------- */
+
+    pid_t child_ps = fork();
+
+    if (child_ps == 0) {
 
         char pid_str[20];
         sprintf(pid_str, "%d", pid);
@@ -128,26 +160,26 @@ int main(int argc, char *argv[]) {
         exit(1);
     }
     else {
-        wait(NULL);  // Esperar al hijo
-    }    
+        wait(NULL);
+    }
+
+    /* ----------- ESPERAR THREAD ----------- */
+
+    pthread_join(thread_col, NULL);
+
+    printf("Thread principal ejecutándose. TID: %ld\n",
+           syscall(SYS_gettid));
 
     int valido = 1;
 
-    // Validar filas
+    /* ----------- VALIDAR FILAS ----------- */
     for (int i = 0; i < 9; i++) {
         if (!validar_fila(i)) {
             valido = 0;
         }
     }
 
-    // Validar columnas
-    for (int i = 0; i < 9; i++) {
-        if (!validar_columna(i)) {
-            valido = 0;
-        }
-    }
-
-    // Validar subcuadros 3x3
+    /* ----------- VALIDAR SUBCUADROS ----------- */
     for (int i = 0; i < 9; i += 3) {
         for (int j = 0; j < 9; j += 3) {
             if (!validar_subcuadro(i, j)) {
@@ -161,22 +193,23 @@ int main(int argc, char *argv[]) {
     else
         printf("El Sudoku NO es correcto.\n");
 
-    
+    /* ----------- SEGUNDO PS (YA SIN THREAD) ----------- */
+
     pid_t child2 = fork();
-    
+
     if (child2 == 0) {
-        
+
         char pid_str[20];
         sprintf(pid_str, "%d", pid);
-        
+
         execlp("ps", "ps", "-p", pid_str, "-lLf", NULL);
-        
+
         perror("Error en execlp");
         exit(1);
     }
     else {
         wait(NULL);
     }
-    
+
     return 0;
 }
