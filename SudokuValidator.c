@@ -72,25 +72,20 @@ int validar_subcuadro(int fila_inicio, int col_inicio) {
     return 1;
 }
 
+/* ----------- NUEVA FUNCIÓN THREAD ----------- */
+
 void* revisar_columnas_thread(void* arg) {
 
-    printf("Thread ejecutando revisión de columnas. TID: %ld\n",
+    printf("El thread que ejecuta el metodo de revision de columnas es: %ld\n",
            syscall(SYS_gettid));
 
-    sleep(5);  // Para que ps alcance a ver el LWP (puedes quitarlo luego)
-
-    int valido = 1;
-
     for (int i = 0; i < 9; i++) {
-        if (!validar_columna(i)) {
-            valido = 0;
-        }
-    }
 
-    if (valido)
-        printf("Columnas válidas.\n");
-    else
-        printf("Columnas NO válidas.\n");
+        printf("En la revision de columnas el siguiente es un thread en ejecucion: %ld\n",
+               syscall(SYS_gettid));
+
+        validar_columna(i);
+    }
 
     pthread_exit(0);
 }
@@ -135,7 +130,7 @@ int main(int argc, char *argv[]) {
     pid_t pid = getpid();
     printf("PID del proceso padre: %d\n", pid);
 
-    /* ----------- CREAR PTHREAD PRIMERO ----------- */
+    /* ----------- CREAR PTHREAD ----------- */
 
     pthread_t thread_col;
 
@@ -163,16 +158,15 @@ int main(int argc, char *argv[]) {
         wait(NULL);
     }
 
-    /* ----------- ESPERAR THREAD ----------- */
-
     pthread_join(thread_col, NULL);
 
-    printf("Thread principal ejecutándose. TID: %ld\n",
+    printf("El thread en el que se ejecuta main es: %ld\n",
            syscall(SYS_gettid));
 
     int valido = 1;
 
     /* ----------- VALIDAR FILAS ----------- */
+
     for (int i = 0; i < 9; i++) {
         if (!validar_fila(i)) {
             valido = 0;
@@ -180,6 +174,7 @@ int main(int argc, char *argv[]) {
     }
 
     /* ----------- VALIDAR SUBCUADROS ----------- */
+
     for (int i = 0; i < 9; i += 3) {
         for (int j = 0; j < 9; j += 3) {
             if (!validar_subcuadro(i, j)) {
@@ -189,11 +184,13 @@ int main(int argc, char *argv[]) {
     }
 
     if (valido)
-        printf("El Sudoku es correcto.\n");
+        printf("Sudoku resuelto!\n");
     else
-        printf("El Sudoku NO es correcto.\n");
+        printf("Sudoku incorrecto.\n");
 
-    /* ----------- SEGUNDO PS (YA SIN THREAD) ----------- */
+    printf("Antes de terminar el estado de este proceso y sus threads es:\n");
+
+    /* ----------- SEGUNDO PS ----------- */
 
     pid_t child2 = fork();
 
