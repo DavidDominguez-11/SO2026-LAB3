@@ -78,13 +78,11 @@ int validar_subcuadro(int fila_inicio, int col_inicio) {
 
 void* revisar_columnas_thread(void* arg) {
 
-    omp_set_num_threads(1);
-
     printf("El thread que ejecuta el metodo de revision de columnas es: %ld\n",
            syscall(SYS_gettid));
 
     // Paralelización con OpenMP
-    #pragma omp parallel for
+    #pragma omp parallel for schedule(dynamic)
     for (int i = 0; i < 9; i++) {
 
         printf("En la revision de columnas el siguiente es un thread en ejecucion: %ld\n",
