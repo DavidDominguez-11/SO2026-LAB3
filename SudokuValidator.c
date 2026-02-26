@@ -78,6 +78,8 @@ int validar_subcuadro(int fila_inicio, int col_inicio) {
 
 void* revisar_columnas_thread(void* arg) {
 
+    omp_set_num_threads(1);
+
     printf("El thread que ejecuta el metodo de revision de columnas es: %ld\n",
            syscall(SYS_gettid));
 
@@ -97,11 +99,6 @@ void* revisar_columnas_thread(void* arg) {
 }
 
 int main(int argc, char *argv[]) {
-
-    omp_set_num_threads(1);
-
-    // Forzar número de threads OpenMP
-    omp_set_num_threads(1);
 
     if (argc != 2) {
         printf("Uso: %s <archivo_sudoku>\n", argv[0]);
