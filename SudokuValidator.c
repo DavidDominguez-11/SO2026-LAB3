@@ -10,6 +10,8 @@
 #include <pthread.h>
 #include <sys/syscall.h>
 
+#include <omp.h>
+
 int sudoku[9][9];   // matriz global
 
 int validar_fila(int fila) {
@@ -72,13 +74,15 @@ int validar_subcuadro(int fila_inicio, int col_inicio) {
     return 1;
 }
 
-/* ----------- NUEVA FUNCIÓN THREAD ----------- */
+/* ----------- THREAD CON OPENMP ----------- */
 
 void* revisar_columnas_thread(void* arg) {
 
     printf("El thread que ejecuta el metodo de revision de columnas es: %ld\n",
            syscall(SYS_gettid));
 
+    // 🔥 Paralelización con OpenMP
+    #pragma omp parallel for
     for (int i = 0; i < 9; i++) {
 
         printf("En la revision de columnas el siguiente es un thread en ejecucion: %ld\n",
@@ -91,6 +95,9 @@ void* revisar_columnas_thread(void* arg) {
 }
 
 int main(int argc, char *argv[]) {
+
+    // 🔥 Forzar número de threads OpenMP
+    omp_set_num_threads(1);
 
     if (argc != 2) {
         printf("Uso: %s <archivo_sudoku>\n", argv[0]);
