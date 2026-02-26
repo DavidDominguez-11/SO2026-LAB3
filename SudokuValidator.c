@@ -81,6 +81,9 @@ void* revisar_columnas_thread(void* arg) {
     printf("El thread que ejecuta el metodo de revision de columnas es: %ld\n",
            syscall(SYS_gettid));
 
+    // NUEVO: Forzar 9 threads OpenMP
+    omp_set_num_threads(9);
+
     // Paralelización con OpenMP
     #pragma omp parallel for schedule(dynamic)
     for (int i = 0; i < 9; i++) {
