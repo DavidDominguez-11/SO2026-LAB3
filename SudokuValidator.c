@@ -98,6 +98,8 @@ void* revisar_columnas_thread(void* arg) {
 
 int main(int argc, char *argv[]) {
 
+    omp_set_num_threads(1);
+
     // Forzar número de threads OpenMP
     omp_set_num_threads(1);
 
