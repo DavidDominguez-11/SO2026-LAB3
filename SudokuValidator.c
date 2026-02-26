@@ -88,6 +88,8 @@ void* revisar_columnas_thread(void* arg) {
         printf("En la revision de columnas el siguiente es un thread en ejecucion: %ld\n",
                syscall(SYS_gettid));
 
+        sleep(2);
+
         validar_columna(i);
     }
 
